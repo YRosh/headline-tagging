@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import styles from "../page.module.css";
+import Loader from "./Loader";
 
 const capitalizeWord = (word: string) => {
    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
@@ -72,23 +73,23 @@ const FormPage = ({
                   onChange={handleTextChange}
                />
             </div>
-            {isLoading && (
-               <div className="spinner-border text-secondary" role="status">
-                  <span className="sr-only">Loading...</span>
-               </div>
-            )}
+            {isLoading && <Loader />}
             {!isLoading && result?.status == "INIT" && (
                <button
                   type="button"
                   className={`btn btn-lg btn-primary ${styles.assignBtn}`}
                   onClick={getHeadlineTag}
+                  disabled={textValue.length == 0}
                >
                   Assign tag
                </button>
             )}
             {!isLoading && result?.status != "INIT" && (
                <div className={styles.resultContainer}>
-                  <div className={`alert ${getColor()}`} role="alert">
+                  <div
+                     className={`alert ${getColor()} alert-dismissible fade show`}
+                     role="alert"
+                  >
                      {result?.status == "SUCCESS" ? (
                         <strong>{`Headline tag: ${capitalizeWord(
                            result?.class || ""
@@ -100,11 +101,9 @@ const FormPage = ({
                      )}
                      <button
                         type="button"
-                        className="close"
+                        className="btn-close"
                         onClick={() => setResult({ status: "INIT" })}
-                     >
-                        <span aria-hidden="true">&times;</span>
-                     </button>
+                     />
                   </div>
                   <button
                      type="button"

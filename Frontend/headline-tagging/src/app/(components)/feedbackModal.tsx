@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import styles from "../page.module.css";
+import Loader from "./Loader";
 
 interface FormData {
    firstName?: string;
@@ -81,16 +82,14 @@ const PastInteractionsModal = ({ closeModal }: { closeModal: Function }) => {
                   <h5 className="modal-title">Feedback form</h5>
                   <button
                      type="button"
-                     className="close"
+                     className="btn-close"
                      onClick={() => closeModal()}
-                  >
-                     <span aria-hidden="true">&times;</span>
-                  </button>
+                  />
                </div>
                <div className={`modal-body ${styles.modalBody}`}>
                   <form>
-                     <div className="row">
-                        <div className="col">
+                     <div className="row g-4">
+                        <div className="col-6">
                            <div className="form-group">
                               <label htmlFor="firstName">First name</label>
                               <input
@@ -105,7 +104,7 @@ const PastInteractionsModal = ({ closeModal }: { closeModal: Function }) => {
                               />
                            </div>
                         </div>
-                        <div className="col">
+                        <div className="col-6">
                            <div className="form-group">
                               <label htmlFor="lastName">Last name</label>
                               <input
@@ -118,9 +117,7 @@ const PastInteractionsModal = ({ closeModal }: { closeModal: Function }) => {
                               />
                            </div>
                         </div>
-                     </div>
-                     <div className="row">
-                        <div className="col">
+                        <div className="col-12">
                            <div className="form-group">
                               <label htmlFor="formEmail">Email address*</label>
                               <input
@@ -134,9 +131,7 @@ const PastInteractionsModal = ({ closeModal }: { closeModal: Function }) => {
                               />
                            </div>
                         </div>
-                     </div>
-                     <div className="row">
-                        <div className="col">
+                        <div className="col-12">
                            <div className="form-group">
                               <label htmlFor="formFeedback">Feedback*</label>
                               <textarea
@@ -150,16 +145,9 @@ const PastInteractionsModal = ({ closeModal }: { closeModal: Function }) => {
                               />
                            </div>
                         </div>
-                     </div>
-                     <div className="row">
-                        <div className="col" style={{ textAlign: "end" }}>
+                        <div className="col-12" style={{ textAlign: "end" }}>
                            {isLoading ? (
-                              <div
-                                 className="spinner-border text-secondary"
-                                 role="status"
-                              >
-                                 <span className="sr-only">Loading...</span>
-                              </div>
+                              <Loader />
                            ) : (
                               <button
                                  type="button"

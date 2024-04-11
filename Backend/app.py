@@ -1,6 +1,5 @@
 from flask import Flask, request, jsonify
-from flaskext.mysql import MySQL
-import pymysql
+import mysql.connector
 from sentence_transformers import SentenceTransformer
 import re
 import pickle
@@ -11,14 +10,15 @@ app = Flask(__name__)
 CORS(app, origins=['http://localhost:3000'])
 
 
-app.config['MYSQL_DATABASE_HOST'] = 'localhost' # SQL server host
-app.config['MYSQL_DATABASE_USER'] = 'root' # SQL server root user name
-app.config['MYSQL_DATABASE_PASSWORD'] = 'roshlvVK@14' # SQL server root user password
-app.config['MYSQL_DATABASE_DB'] = 'news_headlines_classification' # SQL database name
-app.config['MYSQL_DATABASE_USER_INPUTS_TABLE'] = 'user_interactions' # user interactions table name
-app.config['MYSQL_DATABASE_USER_FEEDBACK'] = 'user_feedback' # user feedbacks table name
+db_config = {
+    'host': 'localhost',
+    'user': 'root',
+    'password': 'roshlvVK@14',
+    'database': 'news_headlines_classification'
+}
 
-mysql = MySQL(app)
+MYSQL_DATABASE_USER_INPUTS_TABLE = 'user_interactions'
+MYSQL_DATABASE_USER_FEEDBACK_TABLE = 'user_feedback'
 
 bert_model = SentenceTransformer('bert-base-nli-mean-tokens')
 
@@ -27,19 +27,15 @@ def text_clean(text):
   return text
 
 def initialize_database():
-
     try:
         # Connecting to SQL server
-        conn = mysql.connect()
+        conn = mysql.connector.connect(**db_config)
 
         # Create a cursor object
         cursor = conn.cursor()
 
-        # Selecting the database
-        cursor.execute("USE {}".format(app.config['MYSQL_DATABASE_DB']))
-
         # Check if the user inputs table exists
-        cursor.execute("SHOW TABLES LIKE '{}'".format(app.config['MYSQL_DATABASE_USER_INPUTS_TABLE']))
+        cursor.execute("SHOW TABLES LIKE '{}'".format(MYSQL_DATABASE_USER_INPUTS_TABLE))
         user_interactions_exists = cursor.fetchone()
 
         if not user_interactions_exists:
@@ -51,11 +47,11 @@ def initialize_database():
                     model_response VARCHAR(20),
                     probabilities JSON
                 )
-            """.format(app.config['MYSQL_DATABASE_USER_INPUTS_TABLE'])
+            """.format(MYSQL_DATABASE_USER_INPUTS_TABLE)
             cursor.execute(query)
         
         # Check if the user feedback table exists
-        cursor.execute("SHOW TABLES LIKE '{}'".format(app.config['MYSQL_DATABASE_USER_FEEDBACK']))
+        cursor.execute("SHOW TABLES LIKE '{}'".format(MYSQL_DATABASE_USER_FEEDBACK_TABLE))
         user_feedback_exists = cursor.fetchone()
 
         if not user_feedback_exists:
@@ -68,7 +64,7 @@ def initialize_database():
                     last_name VARCHAR(100),
                     feedback VARCHAR(1000)
                 )
-            """.format(app.config['MYSQL_DATABASE_USER_FEEDBACK'])
+            """.format(MYSQL_DATABASE_USER_FEEDBACK_TABLE)
             cursor.execute(query)
 
         # Commit changes and close cursor and connection
@@ -76,12 +72,12 @@ def initialize_database():
         cursor.close()
         conn.close()
     
-    except pymysql.Error as e:
+    except Exception as e:
         print("Error: \n", e)
 
 def save_to_database(headline, probabilities, classes):
     # connect to database
-    conn = mysql.connect()
+    conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor()
 
     # convert the data to the format required for table
@@ -90,7 +86,7 @@ def save_to_database(headline, probabilities, classes):
     model_response = classes[probabilities.argmax()]
 
     # SQL query to insert data 
-    query = "INSERT INTO " + app.config['MYSQL_DATABASE_USER_INPUTS_TABLE']
+    query = "INSERT INTO " + MYSQL_DATABASE_USER_INPUTS_TABLE
     query += " (user_input, model_response, probabilities) VALUES (%s, %s, %s)"
     cursor.execute(query, (headline, model_response, json_string))
 
@@ -103,7 +99,8 @@ def save_user_feedback():
     if request.method == 'POST':
 
         # connect to database
-        conn = mysql.connect()
+        conn = mysql.connector.connect(**db_config)
+
         cursor = conn.cursor()
 
         try: 
@@ -111,7 +108,7 @@ def save_user_feedback():
             formData = request.get_json()
 
             # SQL query to insert data 
-            query = "INSERT INTO " + app.config['MYSQL_DATABASE_USER_FEEDBACK']
+            query = "INSERT INTO " + MYSQL_DATABASE_USER_FEEDBACK_TABLE
             query += " (email, first_name, last_name, feedback) VALUES (%s, %s, %s, %s)"
             cursor.execute(query, (formData['email'], formData['firstName'], formData['lastName'], formData['feedback']))
 
@@ -135,7 +132,7 @@ def save_user_feedback():
 def get_past_interactions():
     if request.method == 'GET':
         # connecting to database
-        conn = mysql.connect()
+        conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
 
         # query to fetch data from the database
@@ -172,6 +169,7 @@ def get_headline_tag():
         # Loading saved Random Forest model and getting the classification result
         f = open('random_forest_model.pkl', 'rb')
         rf_classifier = pickle.load(f)
+
         categories = rf_classifier.classes_
         category_probabilities = rf_classifier.predict_proba(headline_embedding)[0]
         category_idx = category_probabilities.argmax()
@@ -186,15 +184,12 @@ def get_headline_tag():
         })
     return jsonify({})
 
-# Initializing the database on app startup
-@app.before_first_request
-def setup():
-    initialize_database()
-
 # Sample route for checking if server is running
 @app.route('/')
 def index():
     return 'Flask app running...'
 
 if __name__ == '__main__':
+    # Initializing the database on app startup
+    initialize_database()
     app.run(debug=True)

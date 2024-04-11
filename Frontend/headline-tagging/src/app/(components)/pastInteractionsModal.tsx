@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import styles from "../page.module.css";
+import Loader from "./Loader";
 
 const PastInteractionsModal = ({ closeModal }: { closeModal: Function }) => {
    const [isLoading, setIsLoading] = useState(false);
@@ -43,21 +44,12 @@ const PastInteractionsModal = ({ closeModal }: { closeModal: Function }) => {
                   <h5 className="modal-title">Past user interactions</h5>
                   <button
                      type="button"
-                     className="close"
+                     className="btn-close"
                      onClick={() => closeModal()}
-                  >
-                     <span aria-hidden="true">&times;</span>
-                  </button>
+                  />
                </div>
                <div className={`modal-body ${styles.modalBody}`}>
-                  {isLoading && (
-                     <div
-                        className="spinner-border text-secondary"
-                        role="status"
-                     >
-                        <span className="sr-only">Loading...</span>
-                     </div>
-                  )}
+                  {isLoading && <Loader />}
                   {!isLoading && data.length == 0 && (
                      <div className="alert alert-light" role="alert">
                         No interactions made so far
