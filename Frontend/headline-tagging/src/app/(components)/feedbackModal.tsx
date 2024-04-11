@@ -8,26 +8,46 @@ interface FormData {
    lastName?: string;
    email?: string;
    feedback?: string;
+   error?: boolean;
 }
 
 const PastInteractionsModal = ({ closeModal }: { closeModal: Function }) => {
    const [formData, setFormData] = useState<FormData>({});
    const [formStatus, setFormStatus] = useState("SHOW");
+   const [isLoading, setIsLoading] = useState(false);
+
+   const formValidate = () => {
+      if (formData?.feedback?.length == 0 || formData?.email?.length == 0) {
+         setFormData({ ...formData, error: true });
+         return false;
+      }
+      const regex =
+         // Regex got from Chat GPT
+         /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+      const isValid = regex.test(String(formData?.email).toLowerCase());
+      setFormData({ ...formData, error: !isValid });
+      return isValid;
+   };
 
    const saveFeedback = async () => {
-      const url = "http://127.0.0.1:5000/saveFeedback";
+      const isValid = formValidate();
+      if (!isValid) return;
 
+      const url = "http://127.0.0.1:5000/saveFeedback";
+      setIsLoading(true);
       try {
-         const response = await fetch(url, {
+         await fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(formData),
          });
          setFormStatus("SUCCESS");
+         setFormData({ error: false });
       } catch (error) {
          console.error(error);
          setFormStatus("ERROR");
       }
+      setIsLoading(false);
    };
 
    const updateFormData = (
@@ -44,6 +64,9 @@ const PastInteractionsModal = ({ closeModal }: { closeModal: Function }) => {
       formStatus == "ERROR"
          ? "There was an error saving your feedback"
          : "Thank you for your feedback!";
+
+   const getFormControlClassNames = () =>
+      formData?.error === true ? "form-control is-invalid" : "form-control";
 
    return (
       <div
@@ -99,14 +122,15 @@ const PastInteractionsModal = ({ closeModal }: { closeModal: Function }) => {
                      <div className="row">
                         <div className="col">
                            <div className="form-group">
-                              <label htmlFor="formEmail">Email address</label>
+                              <label htmlFor="formEmail">Email address*</label>
                               <input
                                  type="email"
-                                 className="form-control"
+                                 className={getFormControlClassNames()}
                                  id="formEmail"
                                  placeholder="Please enter your last name"
                                  value={formData?.email}
                                  onChange={(e) => updateFormData("email", e)}
+                                 required
                               />
                            </div>
                         </div>
@@ -114,28 +138,38 @@ const PastInteractionsModal = ({ closeModal }: { closeModal: Function }) => {
                      <div className="row">
                         <div className="col">
                            <div className="form-group">
-                              <label htmlFor="formFeedback">Feedback</label>
+                              <label htmlFor="formFeedback">Feedback*</label>
                               <textarea
-                                 className="form-control"
+                                 className={getFormControlClassNames()}
                                  id="formFeedback"
                                  rows={5}
                                  value={formData?.feedback}
                                  onChange={(e) => updateFormData("feedback", e)}
                                  placeholder="Please type your message here..."
+                                 required
                               />
                            </div>
                         </div>
                      </div>
                      <div className="row">
                         <div className="col" style={{ textAlign: "end" }}>
-                           <button
-                              type="button"
-                              className="btn btn-primary btn-lg"
-                              style={{ alignItems: "flex-end" }}
-                              onClick={saveFeedback}
-                           >
-                              Submit
-                           </button>
+                           {isLoading ? (
+                              <div
+                                 className="spinner-border text-secondary"
+                                 role="status"
+                              >
+                                 <span className="sr-only">Loading...</span>
+                              </div>
+                           ) : (
+                              <button
+                                 type="button"
+                                 className="btn btn-primary btn-lg"
+                                 style={{ alignItems: "flex-end" }}
+                                 onClick={saveFeedback}
+                              >
+                                 Submit
+                              </button>
+                           )}
                         </div>
                      </div>
                      {formStatus != "SHOW" && (
