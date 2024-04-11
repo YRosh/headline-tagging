@@ -90,12 +90,46 @@ def save_to_database(headline, probabilities, classes):
     model_response = classes[probabilities.argmax()]
 
     # SQL query to insert data 
-    query = "INSERT INTO user_interactions (user_input, model_response, probabilities) VALUES (%s, %s, %s)"
+    query = "INSERT INTO " + app.config['MYSQL_DATABASE_USER_INPUTS_TABLE']
+    query += " (user_input, model_response, probabilities) VALUES (%s, %s, %s)"
     cursor.execute(query, (headline, model_response, json_string))
 
     # closing connection
     conn.commit()
     cursor.close()
+
+@app.route('/saveFeedback', methods=['POST'])
+def save_user_feedback():
+    if request.method == 'POST':
+
+        # connect to database
+        conn = mysql.connect()
+        cursor = conn.cursor()
+
+        try: 
+            # get the form data
+            formData = request.get_json()
+
+            # SQL query to insert data 
+            query = "INSERT INTO " + app.config['MYSQL_DATABASE_USER_FEEDBACK']
+            query += " (email, first_name, last_name, feedback) VALUES (%s, %s, %s, %s)"
+            cursor.execute(query, (formData['email'], formData['firstName'], formData['lastName'], formData['feedback']))
+
+            # closing connection
+            conn.commit()
+            cursor.close()
+
+            return "SUCCESS", 200
+
+        except Exception as e:
+            print("error")
+            print(f"An unexpected error occurred: {e}")
+            cursor.close()
+            conn.close()
+
+            return "ERROR", 405
+    print("after if")
+    return "ERROR", 405
 
 @app.route('/getUserInteractions', methods=['GET'])
 def get_past_interactions():

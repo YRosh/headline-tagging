@@ -4,16 +4,20 @@ import React, { useState } from "react";
 import FormPage from "./(components)/formPage";
 import styles from "./page.module.css";
 import PastInteractionsModal from "./(components)/pastInteractionsModal";
+import FeedbackModal from "./(components)/feedbackModal";
 
 const Home = () => {
    const [showForm, setShowForm] = useState(false);
    const [showPIModal, setShowPIModal] = useState(false);
+   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
    const onTryItClick = () => {
       if (!showForm) setShowForm(true);
    };
 
    const togglePIModal = () => setShowPIModal(!showPIModal);
+
+   const toggleFeedbackModal = () => setShowFeedbackModal(!showFeedbackModal);
 
    return (
       <div className={styles.container}>
@@ -43,7 +47,7 @@ const Home = () => {
             </div>
          </div>
          {showForm ? (
-            <FormPage />
+            <FormPage toggleFeedbackModal={toggleFeedbackModal} />
          ) : (
             <div className={styles.subContainer}>
                <p className={styles.appName}>Headline Tagger</p>
@@ -51,6 +55,9 @@ const Home = () => {
          )}
 
          {showPIModal && <PastInteractionsModal closeModal={togglePIModal} />}
+         {showFeedbackModal && (
+            <FeedbackModal closeModal={toggleFeedbackModal} />
+         )}
       </div>
    );
 };

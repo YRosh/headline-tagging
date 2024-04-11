@@ -10,16 +10,20 @@ const capitalizeWord = (word: string) => {
 interface ResultType {
    class?: string;
    probability?: number;
+   status: string;
 }
 
-const FormPage = () => {
+const FormPage = ({
+   toggleFeedbackModal,
+}: {
+   toggleFeedbackModal: Function;
+}) => {
    const [textValue, setTextValue] = useState("");
    const [isLoading, setIsLoading] = useState(false);
-   const [result, setResult] = useState<ResultType>({});
+   const [result, setResult] = useState<ResultType>({ status: "INIT" });
 
    const getHeadlineTag = async () => {
       setIsLoading(true);
-
       const url = "http://127.0.0.1:5000/getHeadlineTag";
       const data = { headline: textValue };
 
@@ -31,8 +35,9 @@ const FormPage = () => {
          });
 
          const responseData = await response.json();
-         setResult(responseData);
+         setResult({ ...responseData, status: "SUCCESS" });
       } catch (error) {
+         setResult({ status: "There was an error processing your request" });
          console.error("Error:", error);
       }
       setIsLoading(false);
@@ -65,14 +70,14 @@ const FormPage = () => {
                   placeholder="Please type your headline here..."
                   value={textValue}
                   onChange={handleTextChange}
-               ></textarea>
+               />
             </div>
             {isLoading && (
                <div className="spinner-border text-secondary" role="status">
                   <span className="sr-only">Loading...</span>
                </div>
             )}
-            {!isLoading && !Object.keys(result).length && (
+            {!isLoading && result?.status == "INIT" && (
                <button
                   type="button"
                   className={`btn btn-lg btn-primary ${styles.assignBtn}`}
@@ -81,23 +86,31 @@ const FormPage = () => {
                   Assign tag
                </button>
             )}
-            {!isLoading && !!Object.keys(result).length && (
+            {!isLoading && result?.status != "INIT" && (
                <div className={styles.resultContainer}>
                   <div className={`alert ${getColor()}`} role="alert">
-                     <strong>{`Headline tag: ${capitalizeWord(
-                        result?.class || ""
-                     )} | Probability: ${
-                        (result?.probability || 0) * 100
-                     }%`}</strong>
+                     {result?.status == "SUCCESS" ? (
+                        <strong>{`Headline tag: ${capitalizeWord(
+                           result?.class || ""
+                        )} | Probability: ${
+                           (result?.probability || 0) * 100
+                        }%`}</strong>
+                     ) : (
+                        result?.status
+                     )}
                      <button
                         type="button"
                         className="close"
-                        onClick={() => setResult({})}
+                        onClick={() => setResult({ status: "INIT" })}
                      >
                         <span aria-hidden="true">&times;</span>
                      </button>
                   </div>
-                  <button type="button" className="btn btn-link btn-lg">
+                  <button
+                     type="button"
+                     className="btn btn-link btn-lg"
+                     onClick={() => toggleFeedbackModal()}
+                  >
                      Feedback
                   </button>
                </div>
