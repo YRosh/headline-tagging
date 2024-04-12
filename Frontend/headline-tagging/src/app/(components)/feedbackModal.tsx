@@ -11,7 +11,7 @@ interface FormData {
    lastName?: string;
    email?: string;
    feedback?: string;
-   error?: boolean;
+   error?: string;
 }
 
 // component which shows the feedback form in a modal
@@ -22,15 +22,27 @@ const PastInteractionsModal = ({ closeModal }: { closeModal: Function }) => {
 
    // basic form validation for email and empty value check
    const formValidate = () => {
-      if (formData?.feedback?.length == 0 || formData?.email?.length == 0) {
-         setFormData({ ...formData, error: true });
-         return false;
+      let isValid = true;
+
+      if (!formData?.feedback?.length) {
+         setFormData({ ...formData, error: "FEEDBACK" });
+         isValid = false;
       }
+      if (!formData?.email?.length) {
+         setFormData({
+            ...formData,
+            error: formData?.error == "FEEDBACK" ? "BOTH" : "EMAIL",
+         });
+         isValid = false;
+      }
+
+      if (!isValid) return false;
+
       const regex =
          // Regex got from Chat GPT
          /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-      const isValid = regex.test(String(formData?.email).toLowerCase());
-      setFormData({ ...formData, error: !isValid });
+      isValid = regex.test(String(formData?.email).toLowerCase());
+      setFormData({ ...formData, error: isValid ? "NONE" : "EMAIL" });
       return isValid;
    };
 
@@ -48,7 +60,7 @@ const PastInteractionsModal = ({ closeModal }: { closeModal: Function }) => {
             body: JSON.stringify(formData),
          });
          setFormStatus("SUCCESS");
-         setFormData({ error: false });
+         setFormData({ error: "NONE" });
       } catch (error) {
          console.error(error);
          setFormStatus("ERROR");
@@ -75,8 +87,11 @@ const PastInteractionsModal = ({ closeModal }: { closeModal: Function }) => {
          : "Thank you for your feedback!";
 
    // function to assign the valid/invalid states classes for form fields
-   const getFormControlClassNames = () =>
-      formData?.error === true ? "form-control is-invalid" : "form-control";
+   const getFormControlClassNames = (fieldName: string) => {
+      if (formData?.error == "BOTH" || formData.error == fieldName)
+         return "form-control is-invalid";
+      return "form-control";
+   };
 
    return (
       <div
@@ -131,7 +146,7 @@ const PastInteractionsModal = ({ closeModal }: { closeModal: Function }) => {
                               <label htmlFor="formEmail">Email address*</label>
                               <input
                                  type="email"
-                                 className={getFormControlClassNames()}
+                                 className={getFormControlClassNames("EMAIL")}
                                  id="formEmail"
                                  placeholder="Please enter your last name"
                                  value={formData?.email}
@@ -144,7 +159,9 @@ const PastInteractionsModal = ({ closeModal }: { closeModal: Function }) => {
                            <div className="form-group">
                               <label htmlFor="formFeedback">Feedback*</label>
                               <textarea
-                                 className={getFormControlClassNames()}
+                                 className={getFormControlClassNames(
+                                    "FEEDBACK"
+                                 )}
                                  id="formFeedback"
                                  rows={5}
                                  value={formData?.feedback}
@@ -168,15 +185,17 @@ const PastInteractionsModal = ({ closeModal }: { closeModal: Function }) => {
                               </button>
                            )}
                         </div>
-                     </div>
-                     {formStatus != "SHOW" && (
-                        <div
-                           className={`alert ${getAlertClass()}`}
-                           role="alert"
-                        >
-                           {getAlertMessage()}
+                        <div className="col-12">
+                           {formStatus != "SHOW" && (
+                              <div
+                                 className={`alert ${getAlertClass()}`}
+                                 role="alert"
+                              >
+                                 {getAlertMessage()}
+                              </div>
+                           )}
                         </div>
-                     )}
+                     </div>
                   </form>
                </div>
                <div className={styles.backdrop} />
