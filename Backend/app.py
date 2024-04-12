@@ -11,21 +11,25 @@ CORS(app, origins=['http://localhost:3000'])
 
 
 db_config = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': 'roshlvVK@14',
-    'database': 'news_headlines_classification'
+    'host': 'localhost', # ADD YOUR HOST URL
+    'user': 'root', # ADD YOUR DB USERNAME
+    'password': 'PASSWORD', # ADD YOUR DB PASSWORD
+    'database': 'DATABASE_NAME' # ADD YOUR DATABASE NAME WHERE YOU WANT THE DATA TO BE STORED
 }
 
+# variables to store the table names
 MYSQL_DATABASE_USER_INPUTS_TABLE = 'user_interactions'
 MYSQL_DATABASE_USER_FEEDBACK_TABLE = 'user_feedback'
 
+# BERT model which is used to convert the given sentence to word embeddings
 bert_model = SentenceTransformer('bert-base-nli-mean-tokens')
 
+# function to clean the text with only alpha-numeric characters and space and '.'
 def text_clean(text):
   text = re.sub(r'[^A-Za-z0-9 .]+', '', text)
   return text
 
+# initial function to create the necessary tables in the database if not already present
 def initialize_database():
     try:
         # Connecting to SQL server
@@ -75,6 +79,7 @@ def initialize_database():
     except Exception as e:
         print("Error: \n", e)
 
+# function to save the user interaction to the DB with user input and model prediction
 def save_to_database(headline, probabilities, classes):
     # connect to database
     conn = mysql.connector.connect(**db_config)
@@ -94,6 +99,7 @@ def save_to_database(headline, probabilities, classes):
     conn.commit()
     cursor.close()
 
+# function to save the user feedback to the table
 @app.route('/saveFeedback', methods=['POST'])
 def save_user_feedback():
     if request.method == 'POST':
@@ -128,6 +134,7 @@ def save_user_feedback():
     print("after if")
     return "ERROR", 405
 
+# function to fetch all the past user interactions from the database
 @app.route('/getUserInteractions', methods=['GET'])
 def get_past_interactions():
     if request.method == 'GET':
@@ -142,6 +149,7 @@ def get_past_interactions():
             cursor.execute(query)
             rows = cursor.fetchall()
 
+            # converting the array of arrays to array of objects with the column name as key
             col_names = [desc[0] for desc in cursor.description]
             dict_rows = [dict(zip(col_names, row)) for row in rows]
 
@@ -155,6 +163,8 @@ def get_past_interactions():
             return jsonify([])
     return jsonify([])
 
+# function that is called to get the prediction for the given headline. The AI model is called here and the results
+# are later saved to the database
 @app.route('/getHeadlineTag', methods=['POST'])
 def get_headline_tag():
     if request.method == 'POST':

@@ -6,17 +6,21 @@ import styles from "./page.module.css";
 import PastInteractionsModal from "./(components)/pastInteractionsModal";
 import FeedbackModal from "./(components)/feedbackModal";
 
+// Main component
 const Home = () => {
    const [showForm, setShowForm] = useState(false);
    const [showPIModal, setShowPIModal] = useState(false);
    const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
+   // function to show the textarea input to enter the headline
    const onTryItClick = () => {
       if (!showForm) setShowForm(true);
    };
 
+   // function to toggle the show state of the previous interactions modal
    const togglePIModal = () => setShowPIModal(!showPIModal);
 
+   // function to toggle the show state of the feedback modal
    const toggleFeedbackModal = () => setShowFeedbackModal(!showFeedbackModal);
 
    return (

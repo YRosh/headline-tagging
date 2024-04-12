@@ -3,15 +3,18 @@
 import React, { useState, useEffect } from "react";
 import styles from "../page.module.css";
 import Loader from "./Loader";
+import { BACKEND_URL } from "../layout";
 
+// component to show the past interactions with the AI in a modal
 const PastInteractionsModal = ({ closeModal }: { closeModal: Function }) => {
    const [isLoading, setIsLoading] = useState(false);
    const [data, setData] = useState([]);
 
+   // function to fetch all the past user interactions from the database
    const fetchInteractions = async () => {
       setIsLoading(true);
 
-      const url = "http://127.0.0.1:5000/getUserInteractions";
+      const url = `${BACKEND_URL}/getUserInteractions`;
 
       try {
          const response = await fetch(url, {

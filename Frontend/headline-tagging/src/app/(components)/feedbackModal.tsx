@@ -3,7 +3,9 @@
 import React, { useState } from "react";
 import styles from "../page.module.css";
 import Loader from "./Loader";
+import { BACKEND_URL } from "../layout";
 
+// interface to store the feedback form data
 interface FormData {
    firstName?: string;
    lastName?: string;
@@ -12,11 +14,13 @@ interface FormData {
    error?: boolean;
 }
 
+// component which shows the feedback form in a modal
 const PastInteractionsModal = ({ closeModal }: { closeModal: Function }) => {
    const [formData, setFormData] = useState<FormData>({});
    const [formStatus, setFormStatus] = useState("SHOW");
    const [isLoading, setIsLoading] = useState(false);
 
+   // basic form validation for email and empty value check
    const formValidate = () => {
       if (formData?.feedback?.length == 0 || formData?.email?.length == 0) {
          setFormData({ ...formData, error: true });
@@ -30,11 +34,12 @@ const PastInteractionsModal = ({ closeModal }: { closeModal: Function }) => {
       return isValid;
    };
 
+   // function to call the API and save the user feedback in the database
    const saveFeedback = async () => {
       const isValid = formValidate();
       if (!isValid) return;
 
-      const url = "http://127.0.0.1:5000/saveFeedback";
+      const url = `${BACKEND_URL}/saveFeedback`;
       setIsLoading(true);
       try {
          await fetch(url, {
@@ -51,6 +56,7 @@ const PastInteractionsModal = ({ closeModal }: { closeModal: Function }) => {
       setIsLoading(false);
    };
 
+   // function to update the state of the form with the user entered details
    const updateFormData = (
       name: string,
       event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
@@ -58,14 +64,17 @@ const PastInteractionsModal = ({ closeModal }: { closeModal: Function }) => {
       setFormData({ ...formData, [name]: event.target.value });
    };
 
+   // function to get the color of the alert box after data submission. Red for error and green fo success
    const getAlertClass = () =>
       formStatus == "ERROR" ? "alert-danger" : "alert-success";
 
+   // function to get the message to show in the alert box after submission
    const getAlertMessage = () =>
       formStatus == "ERROR"
          ? "There was an error saving your feedback"
          : "Thank you for your feedback!";
 
+   // function to assign the valid/invalid states classes for form fields
    const getFormControlClassNames = () =>
       formData?.error === true ? "form-control is-invalid" : "form-control";
 

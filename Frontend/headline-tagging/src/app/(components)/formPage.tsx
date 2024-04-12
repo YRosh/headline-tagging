@@ -3,17 +3,21 @@
 import React, { useState } from "react";
 import styles from "../page.module.css";
 import Loader from "./Loader";
+import { BACKEND_URL } from "../layout";
 
+// Function to capitalize words, where 1st letter is capital and remaining are small. Eg: Politics
 const capitalizeWord = (word: string) => {
    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
 };
 
+// Interface for the result object which stores the AI modal result for given headline
 interface ResultType {
    class?: string;
    probability?: number;
    status: string;
 }
 
+// The text area component which also shows the AI model result
 const FormPage = ({
    toggleFeedbackModal,
 }: {
@@ -23,9 +27,10 @@ const FormPage = ({
    const [isLoading, setIsLoading] = useState(false);
    const [result, setResult] = useState<ResultType>({ status: "INIT" });
 
+   // function to call the backend with the AI model to fetch the result for the headline
    const getHeadlineTag = async () => {
       setIsLoading(true);
-      const url = "http://127.0.0.1:5000/getHeadlineTag";
+      const url = `${BACKEND_URL}/getHeadlineTag`;
       const data = { headline: textValue };
 
       try {
@@ -44,15 +49,17 @@ const FormPage = ({
       setIsLoading(false);
    };
 
+   // function to update the state of the headline in text area
    const handleTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
       setTextValue(event?.target?.value);
    };
 
+   // function to set the color for the result box based on the model confidence on prediction
    const getColor = () => {
       const probability = result?.probability || 0;
-      return probability >= 0.6
+      return probability >= 0.57
          ? "alert-success"
-         : probability >= 0.5
+         : probability >= 0.47
          ? "alert-warning"
          : "alert-danger";
    };
